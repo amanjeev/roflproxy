@@ -1,4 +1,4 @@
-LISTENING_HOST = "localhost"
+LISTENING_HOST = "127.0.0.1"
 LISTENING_PORT = 12666
 
 TARGET_HOST = "google.com"

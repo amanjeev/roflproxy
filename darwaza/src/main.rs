@@ -1,18 +1,56 @@
 #![warn(rust_2018_idioms)]
 
-use std::collections::HashMap;
+use {
+    std::{
+        collections::HashMap,
+        net::SocketAddr,
+    },
+};
 
 use clap::{App, Arg, SubCommand};
 
-use futures::future::try_join;
-use futures::stream::StreamExt;
+use {
+    hyper::{
+        Body, Client, Request, Response, Server, Uri,
 
-use tokio::net::{TcpStream, TcpListener};
-use tokio::prelude::*;
+        // This function turns a closure which returns a future into an
+        // implementation of the the Hyper `Service` trait, which is an
+        // asynchronous function from a generic `Request` to a `Response`.
+        service::service_fn,
 
+        // A function which runs a future to completion using the Hyper runtime.
+        rt::run,
+    },
+    futures::{
+        // Extension trait for futures 0.1 futures, adding the `.compat()` method
+        // which allows us to use `.await` on 0.1 futures.
+        compat::Future01CompatExt,
+        // Extension traits providing additional methods on futures.
+        // `FutureExt` adds methods that work for all futures, whereas
+        // `TryFutureExt` adds methods to futures that return `Result` types.
+        future::{FutureExt, TryFutureExt},
+    },
+};
 
-#[tokio::main]
-async fn main() {
+async fn server_request(_req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+    let url = "https://www.rust-lang.org/en-US/";
+    let url = url.parse::<Uri>().expect("failed to parse url");
+    let res = Client::new().get(url).compat().await;
+    println!("request finished-- returning response");
+    res
+}
+
+async fn run_proxy_server(addr: SocketAddr) {
+    println!("Listening on address: {}", addr);
+    let serve_future = Server::bind(&addr)
+        .serve(|| service_fn(|req| server_request(req).boxed().compat()));
+
+    if let Err(e) = serve_future.compat().await {
+        eprintln!("server error: {}", e);
+    }
+}
+
+fn main() {
     let matches = App::new("darwaza")
         .about("Reverse Proxy")
         .subcommand(SubCommand::with_name("start"))
@@ -32,59 +70,15 @@ async fn main() {
     settings.merge(config::File::with_name(config)).unwrap();
     let settings_hash = settings.try_into::<HashMap<String, String>>().unwrap();
 
-    // server
+    // start proxy server
     let listener_addr = format!("{}:{}", settings_hash["listening_host"], settings_hash["listening_port"]);
-    let mut listener = TcpListener::bind(listener_addr.clone()).await.unwrap();
+    let listener_addr: SocketAddr = listener_addr.parse().expect("unable to parse socket address");
 
-    let proxy_server = async move {
-        let mut incoming = listener.incoming();
+    let futures_03_future = run_proxy_server(listener_addr);
+    let futures_01_future = futures_03_future.unit_error().boxed().compat();
 
-        while let Some(conn) = incoming.next().await {
-            match conn {
-                Err(err) => { println!("accept error = {:?}", err); }
-                Ok(mut socket) => {
-                    println!("Accepted connection from {:?}", socket.peer_addr());
-                    tokio::spawn(async move {
-                        // spawn a transfer task here
-                        let tramsfer = transfer()
-                    });
-                }
-            }
-        }
-    };
-
-    println!("Proxy server running on {}", listener_addr);
-    proxy_server.await;
-
-    // start client here to connect to a running server
-    // you can run a server by
-    // `socat TCP-LISTEN:6142,fork stdout`
-    /*let target = format!("{}:{}", settings_hash["listening_host"], settings_hash["listening_port"]);
-    let mut stream = TcpStream::connect(target).await.unwrap();
-    println!("Created stream");
-
-    let result = stream.write(b"hello world\n").await;
-    println!("wrote to stream; success={:?}", result.is_ok());*/
+    run(futures_01_future);
 }
-
-async fn transfer(mut inbound: TcpStream, proxy_addr: String) {
-    let mut outbound = TcpStream::connect(proxy_addr).await.unwrap();
-
-    let (mut ri, mut wi) = inbound.split();
-    let (mut ro, mut wo) = outbound.split();
-
-    let client_to_server = io::copy(&mut ri, &mut wo);
-    let server_to_client = io::copy(&mut ro, &mut wi);
-
-    try_join(client_to_server, server_to_client).await.unwrap();
-}
-
-
-
-
-
-
-
 
 
 
