@@ -18,4 +18,4 @@ tokio = { version = "0.2", features = ["full"] }
 
 [[bin]]
 name = "darwaza"
-path = "src/darwaza.rs"
+path = "src/main.rs"
