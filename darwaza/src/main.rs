@@ -1,13 +1,7 @@
-use async_std::{
-    io,
-    net::{TcpListener, TcpStream},
-    prelude::*,
-    task,
-};
-use futures::TryFutureExt;
-use log::{debug, error};
+use async_std::{io, prelude::*, task};
+use log::error;
 use std::error::Error;
-use surf::{Client, Request as ClientRequest, Response as ClientResponse};
+use surf::{Request as ClientRequest, Response as ClientResponse};
 use tide::{Request, Response};
 use url::Url;
 
@@ -22,7 +16,7 @@ fn main() {
     });
 }
 
-async fn proxy(mut request: Request<()>) -> Response {
+async fn proxy(request: Request<()>) -> Response {
     let mut target_server_response = match request_to_target(request).await {
         Ok(r) => r,
         Err(e) => {
@@ -39,7 +33,7 @@ async fn proxy(mut request: Request<()>) -> Response {
         }
     };
 
-    let mut proxy_response = Response::new(target_server_response.status().as_u16())
+    let proxy_response = Response::new(target_server_response.status().as_u16())
         .body(io::Cursor::new(target_server_response_bytes));
 
     proxy_response
