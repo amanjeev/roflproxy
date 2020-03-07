@@ -10,6 +10,7 @@ fn main() {
         let addr = format!("127.0.0.1:12666"); //proxy server should listen on here
         let mut server = tide::new();
         server.at("/").all(proxy);
+        server.at("/*").all(proxy);
         if let Err(e) = server.listen(addr).await {
             error!("{}", e);
         }
@@ -41,7 +42,9 @@ async fn proxy(request: Request<()>) -> Response {
 
 async fn request_to_target(mut request: Request<()>) -> Result<ClientResponse, Box<dyn Error>> {
     let body = request.body_bytes().await?;
-    let target_server_url = Url::parse("http://127.0.0.1:8000")?;
+
+    let mut target_server_url = Url::parse("http://127.0.0.1:8000")?;
+    target_server_url = target_server_url.join(request.uri().to_string().as_str())?;
 
     let mut target_server_request = ClientRequest::new(request.method().clone(), target_server_url);
     target_server_request = target_server_request.body_bytes(body);
