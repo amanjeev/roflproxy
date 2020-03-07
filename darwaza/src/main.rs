@@ -1,30 +1,56 @@
-use async_std::io;
-use async_std::net::{TcpListener, TcpStream};
-use async_std::prelude::*;
-use async_std::task;
+use async_std::{
+    io,
+    net::{TcpListener, TcpStream},
+    prelude::*,
+    task,
+};
 use futures::TryFutureExt;
+use log::{debug, error};
+use std::error::Error;
+use surf::{Client, Request as ClientRequest, Response as ClientResponse};
+use tide::{Request, Response};
+use url::Url;
 
-fn main() -> io::Result<()> {
-    task::block_on(async {
-        let listener = TcpListener::bind("127.0.0.1:12666").await?;
-        println!("Listening on {}", listener.local_addr()?);
-
-        let mut incoming = listener.incoming();
-
-        while let Some(incoming_stream) = incoming.next().await {
-            let incoming_stream = incoming_stream?;
-
-            task::spawn(async {
-                println!("TASK SPAWNING");
-                let url = "http://127.0.0.1:8000";
-                let mut response = surf::get(url);
-                let body = response
-                    .recv_string()
-                    .await
-                    .unwrap_or("Something fail yo!".to_string());
-                println!("BODY: {:?}", body);
-            });
+fn main() {
+    task::block_on(async move {
+        let addr = format!("127.0.0.1:12666"); //proxy server should listen on here
+        let mut server = tide::new();
+        server.at("/").all(proxy);
+        if let Err(e) = server.listen(addr).await {
+            error!("{}", e);
         }
-        Ok(())
-    })
+    });
+}
+
+async fn proxy(mut request: Request<()>) -> Response {
+    let mut target_server_response = match request_to_target(request).await {
+        Ok(r) => r,
+        Err(e) => {
+            error!("{}", e);
+            return Response::new(500);
+        }
+    };
+
+    let target_server_response_bytes = match target_server_response.body_bytes().await {
+        Ok(b) => b,
+        Err(e) => {
+            error!("{}", e);
+            return Response::new(500);
+        }
+    };
+
+    let mut proxy_response = Response::new(target_server_response.status().as_u16())
+        .body(io::Cursor::new(target_server_response_bytes));
+
+    proxy_response
+}
+
+async fn request_to_target(mut request: Request<()>) -> Result<ClientResponse, Box<dyn Error>> {
+    let body = request.body_bytes().await?;
+    let target_server_url = Url::parse("http://127.0.0.1:8000")?;
+
+    let mut target_server_request = ClientRequest::new(request.method().clone(), target_server_url);
+    target_server_request = target_server_request.body_bytes(body);
+
+    Ok(target_server_request.await.map_err(|e| format!("{}", e))?)
 }
