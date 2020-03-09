@@ -4,7 +4,7 @@ use log::error;
 use std::collections::HashMap;
 use std::error::Error;
 use surf::{Request as ClientRequest, Response as ClientResponse};
-use tide::{Request, Response};
+use tide::{Request as ServerRequest, Response as ServerResponse};
 use url::Url;
 
 fn main() {
@@ -42,7 +42,7 @@ async fn map_uri_to_target() -> HashMap<&'static str, &'static str> {
 /// and the request is for
 ///     `/staff/jdoe`
 /// then, the target server is `foo.com:1234`
-async fn target_server(request: Request<()>) -> Result<Url, Box<dyn Error>> {
+async fn target_server(request: ServerRequest<()>) -> Result<Url, Box<dyn Error>> {
     // get the target from uri segment using the map
     let uri_map = map_uri_to_target().await;
     let mut result_target = "";
@@ -79,7 +79,7 @@ async fn target_segment(uri: &Uri) -> Result<Url, Box<dyn Error>> {
     Ok(Url::parse(result_url)?)
 }
 
-async fn proxy(request: Request<()>) -> Response {
+async fn proxy(request: ServerRequest<()>) -> ServerResponse {
     // get the target server from the uri segment
     // then get the target segment from the remaining url segment
 
@@ -87,7 +87,7 @@ async fn proxy(request: Request<()>) -> Response {
         Ok(r) => r,
         Err(e) => {
             error!("{}", e);
-            return Response::new(500);
+            return ServerResponse::new(500);
         }
     };
 
@@ -95,17 +95,19 @@ async fn proxy(request: Request<()>) -> Response {
         Ok(b) => b,
         Err(e) => {
             error!("{}", e);
-            return Response::new(500);
+            return ServerResponse::new(500);
         }
     };
 
-    let proxy_response = Response::new(target_server_response.status().as_u16())
+    let proxy_response = ServerResponse::new(target_server_response.status().as_u16())
         .body(io::Cursor::new(target_server_response_bytes));
 
     proxy_response
 }
 
-async fn request_to_target(mut request: Request<()>) -> Result<ClientResponse, Box<dyn Error>> {
+async fn request_to_target(
+    mut request: ServerRequest<()>,
+) -> Result<ClientResponse, Box<dyn Error>> {
     let body = request.body_bytes().await?;
     //let uri_seg = request.uri();
 
