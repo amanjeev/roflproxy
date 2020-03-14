@@ -1,5 +1,5 @@
 use async_std::{io, prelude::*, task};
-use http::Uri;
+use http::{Response, Uri};
 use log::error;
 use std::collections::HashMap;
 use std::error::Error;
@@ -22,61 +22,6 @@ fn main() {
             error!("{}", e);
         }
     });
-}
-
-async fn map_uri_to_target() -> HashMap<&'static str, &'static str> {
-    // TODO: get this map from config
-    let mut uri_to_target_map: HashMap<&str, &str> = HashMap::new();
-    uri_to_target_map.insert("/home", "127.0.0.1:8000");
-    uri_to_target_map.insert("/about", "127.0.0.1:8000");
-
-    uri_to_target_map
-}
-
-/// Returns a target server URL given the `request` object
-/// If the mapping is
-///     ```
-///     "/home"  => "foo.com:1234"
-///     "/staff" => "bar.org:4567"
-///     ```
-/// and the request is for
-///     `/staff/jdoe`
-/// then, the target server is `foo.com:1234`
-async fn target_server(request: ServerRequest<()>) -> Result<Url, Box<dyn Error>> {
-    // get the target from uri segment using the map
-    let uri_map = map_uri_to_target().await;
-    let mut result_target = "";
-    for (uri, server) in uri_map.iter() {
-        if request.uri().to_string().contains(uri) {
-            result_target = server;
-        }
-    }
-    Ok(Url::parse(result_target)?)
-}
-
-/// Returns the target segment after removing the mapping segment
-/// from the URL to the target server
-/// If the mapping is
-///     ```
-///     "/home"  => "foo.com:1234"
-///     "/staff" => "bar.org:4567"
-///     ```
-/// and the request is for
-///     `/staff/jdoe`
-/// then, the target segment is `/jdoe`
-async fn target_segment(uri: &Uri) -> Result<Url, Box<dyn Error>> {
-    // get the url segment for the target server, minus the segment used
-    // to map the target
-    let uri_map = map_uri_to_target().await;
-    let mut result_url = "";
-    for (u, server) in uri_map.iter() {
-        if uri.to_string().contains(u) {
-            result_url = "";
-        }
-    }
-    let result_url = result_url.replace(uri.to_string().as_str(), result_url);
-    let result_url = result_url.as_str();
-    Ok(Url::parse(result_url)?)
 }
 
 async fn proxy(request: ServerRequest<()>) -> ServerResponse {
@@ -109,13 +54,60 @@ async fn request_to_target(
     mut request: ServerRequest<()>,
 ) -> Result<ClientResponse, Box<dyn Error>> {
     let body = request.body_bytes().await?;
-    //let uri_seg = request.uri();
+    let method = request.method().clone();
 
-    let mut target_server_url = Url::parse("http://127.0.0.1:8000")?;
-    target_server_url = target_server_url.join(request.uri().to_string().as_str())?;
+    let target_server_url = target(request)
+        .await
+        .unwrap_or(Url::parse("http://127.0.0.1:8000/404.html")?);
 
-    let mut target_server_request = ClientRequest::new(request.method().clone(), target_server_url);
+    let mut target_server_request = ClientRequest::new(method, target_server_url);
     target_server_request = target_server_request.body_bytes(body);
 
     Ok(target_server_request.await.map_err(|e| format!("{}", e))?)
+}
+
+/// Returns a target server URL given the `request` object
+/// If the mapping is
+///     ```
+///     "/home"  => "foo.com:1234"
+///     "/staff" => "bar.org:4567"
+///     ```
+/// and the request is for
+///     `/staff/jdoe`
+/// then, the target server is `foo.com:1234/jdoe`
+async fn target(request: ServerRequest<()>) -> Result<Url, Box<dyn Error>> {
+    let incoming_request_uri = request.uri().clone();
+    // get the target from uri segment using the map
+    let uri_map = map_uri_to_target().await;
+    let mut result_server = "".to_string();
+    let mut result_url = "".to_string();
+    dbg!(incoming_request_uri.clone());
+    for (uri, server) in uri_map.iter() {
+        if incoming_request_uri
+            .to_string()
+            .as_str()
+            .starts_with(uri.to_string().as_str())
+        {
+            dbg!("Matched: ", uri.clone());
+            result_server = server.to_string();
+            result_url = incoming_request_uri.to_string().replace(uri, "");
+            dbg!(result_server.clone(), result_url.clone());
+        } else {
+            dbg!("No match for: ", uri.clone());
+        }
+    }
+    let mut result_target = Url::parse(result_server.as_str())?.join(result_url.as_str())?;
+
+    dbg!("The final Target>> ", result_target.clone());
+
+    Ok(result_target)
+}
+
+async fn map_uri_to_target() -> HashMap<&'static str, &'static str> {
+    // TODO: get this map from config
+    let mut uri_to_target_map: HashMap<&str, &str> = HashMap::new();
+    uri_to_target_map.insert("/home", "http://127.0.0.1:8000");
+    uri_to_target_map.insert("/about", "http://127.0.0.1:8000");
+
+    uri_to_target_map
 }
