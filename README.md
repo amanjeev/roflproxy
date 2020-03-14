@@ -11,6 +11,14 @@ When you are laughing on the floor.
 
 ## TODO
 
+- Proxy HTTP spec changes to adhere to the standard
+    - Headers
+    - Response status codes
 - Mapping of 
     - Config based target servers
     - Config based API setting
+    - Better way to define servers in config and scheme
+- OIDC SSO
+- Hot configuration change so the gateway runs all the time
+- Edit all `?` with proper catching of errors
+- 
