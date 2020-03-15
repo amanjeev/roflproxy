@@ -1,8 +1,9 @@
+use std::collections::HashMap;
+use std::error::Error;
+
 use async_std::{io, prelude::*, task};
 use http::{Response, Uri};
 use log::error;
-use std::collections::HashMap;
-use std::error::Error;
 use surf::{Request as ClientRequest, Response as ClientResponse};
 use tide::{Request as ServerRequest, Response as ServerResponse};
 use url::Url;
