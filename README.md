@@ -1,12 +1,18 @@
 # ROFLPROXY
 
-When you are laughing on the floor.
+> When you are laughing on the floor, by proxy.
+
+NOTHING TO SEE HERE!
+
+This is a way for me to play with Rust and async-std, async-rs etc.
 
 ## Main goals of this project
 
-- A tiny fast API gateway that works with static file API definition.
+- Play.
+- Have fun.
+- A tiny API gateway or proxy that works with static file API definition.
+- Has SSO feature and works with OpenID Connect protocol, esp.**distributed claims** setup.
 - Support multiple Identity Providers.
-- Has SSO feature and works with OpenID Connect protocol.
 - Allows for middleware/plugins to enhance the request/response flow and extensibility.
 
 ## TODO
@@ -20,5 +26,5 @@ When you are laughing on the floor.
     - Better way to define servers in config and scheme
 - OIDC SSO
 - Hot configuration change so the gateway runs all the time
-- Edit all `?` with proper catching of errors
+- Edit all `?` with proper crap
 - 
