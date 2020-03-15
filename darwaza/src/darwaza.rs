@@ -6,7 +6,7 @@ use surf::{Request as ClientRequest, Response as ClientResponse};
 use tide::{Request as ServerRequest, Response as ServerResponse};
 use url::Url;
 
-pub fn dmain() {
+pub fn demain() {
     task::block_on(async move {
         // TODO: from config proxy server should listen on here
         let addr = format!("127.0.0.1:12666");
