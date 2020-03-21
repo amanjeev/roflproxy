@@ -20,7 +20,6 @@ pub fn demain() {
         if let Err(e) = server.listen(addr).await {
             error!("{}", e);
         }
-        //Ok(())
     })
 }
 
