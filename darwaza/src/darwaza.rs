@@ -2,8 +2,8 @@ use async_std::{io, task};
 use log::error;
 use std::collections::HashMap;
 use std::error::Error;
-use surf::{Request as ClientRequest, Response as ClientResponse};
-use tide::{Request as ServerRequest, Response as ServerResponse};
+use surf::{Request as RequestAsClient, Response as ResponseAsClient};
+use tide::{Request as RequestAsServer, Response as ResponseAsServer};
 use url::Url;
 
 pub fn demain() {
@@ -20,10 +20,11 @@ pub fn demain() {
         if let Err(e) = server.listen(addr).await {
             error!("{}", e);
         }
-    });
+        //Ok(())
+    })
 }
 
-async fn proxy(request: ServerRequest<()>) -> ServerResponse {
+async fn proxy(request: RequestAsServer<()>) -> ResponseAsServer {
     // get the target server from the uri segment
     // then get the target segment from the remaining url segment
 
@@ -31,7 +32,7 @@ async fn proxy(request: ServerRequest<()>) -> ServerResponse {
         Ok(r) => r,
         Err(e) => {
             error!("{}", e);
-            return ServerResponse::new(500);
+            return ResponseAsServer::new(500);
         }
     };
 
@@ -39,19 +40,19 @@ async fn proxy(request: ServerRequest<()>) -> ServerResponse {
         Ok(b) => b,
         Err(e) => {
             error!("{}", e);
-            return ServerResponse::new(500);
+            return ResponseAsServer::new(500);
         }
     };
 
-    let proxy_response = ServerResponse::new(target_server_response.status().as_u16())
+    let proxy_response = ResponseAsServer::new(target_server_response.status().as_u16())
         .body(io::Cursor::new(target_server_response_bytes));
 
     proxy_response
 }
 
 async fn request_to_target(
-    mut request: ServerRequest<()>,
-) -> Result<ClientResponse, Box<dyn Error>> {
+    mut request: RequestAsServer<()>,
+) -> Result<ResponseAsClient, Box<dyn Error>> {
     let body = request.body_bytes().await?;
     let method = request.method().clone();
 
@@ -59,7 +60,7 @@ async fn request_to_target(
         .await
         .unwrap_or(Url::parse("http://127.0.0.1:8000/404.html")?);
 
-    let mut target_server_request = ClientRequest::new(method, target_server_url);
+    let mut target_server_request = RequestAsClient::new(method, target_server_url);
     target_server_request = target_server_request.body_bytes(body);
 
     Ok(target_server_request.await.map_err(|e| format!("{}", e))?)
@@ -74,7 +75,7 @@ async fn request_to_target(
 /// and the request is for
 ///     `/staff/jdoe`
 /// then, the target server is `foo.com:1234/jdoe`
-async fn target(request: ServerRequest<()>) -> Result<Url, Box<dyn Error>> {
+async fn target(request: RequestAsServer<()>) -> Result<Url, Box<dyn Error>> {
     let incoming_request_uri = request.uri().clone();
     // get the target from uri segment using the map
     let uri_map = map_uri_to_target().await;

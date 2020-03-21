@@ -1,11 +1,9 @@
+use std::error::Error;
 use surf::http::request::Request;
-use surf::{Request as ClientRequest, Response as ClientResponse};
-use tide::{Request as ServerRequest, Response as ServerResponse};
+use surf::{Request as RequestAsClient, Response as ResponseAsClient};
+use tide::{Request as RequestAsServer, Response as ResponseAsServer};
 use url::Url;
 
-//TODO: Fix this, not sure how to design this yet.
-
-trait Proxyficate {
-    fn convert_downstream_request(rq: ServerRequest<()>) -> (); // TODO: fix this type
-    fn convert_upstream_response(rs: ClientResponse) -> ServerResponse;
+pub trait Proxificate {
+    fn derive_request_to_server(mut request_from_client: RequestAsServer<()>) -> () {}
 }

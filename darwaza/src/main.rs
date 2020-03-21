@@ -2,6 +2,7 @@ mod config;
 mod darwaza;
 mod proxyficate;
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     darwaza::demain();
+    Ok(())
 }
