@@ -1,3 +1,5 @@
+![Rust](https://github.com/amanjeev/roflproxy/workflows/Rust/badge.svg?branch=master)
+
 # ROFLPROXY
 
 > When you are laughing on the floor, by proxy.
