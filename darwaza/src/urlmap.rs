@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::error::Error;
-
 use tide::Request as RequestAsServer;
 use url::Url;
 

@@ -1,11 +1,9 @@
-use std::error::Error;
-
+use crate::urlmap::UrlMap;
 use http_client::isahc::IsahcClient;
+use std::error::Error;
 use surf::{Request as RequestAsClient, Response as ResponseAsClient};
 use tide::Request as RequestAsServer;
 use url::Url;
-
-use crate::urlmap::UrlMap;
 
 #[derive(Debug)]
 pub struct Proxyficate {

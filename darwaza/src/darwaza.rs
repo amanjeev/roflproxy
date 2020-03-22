@@ -1,8 +1,7 @@
+use crate::proxyficate::Proxyficate;
 use async_std::{io, task};
 use log::error;
 use tide::{Request as RequestAsServer, Response as ResponseAsServer};
-
-use crate::proxyficate::Proxyficate;
 
 pub fn demain() {
     task::block_on(async move {
