@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 
+use http_client::isahc::IsahcClient;
 use surf::{Request as RequestAsClient, Response as ResponseAsClient};
 use tide::{Request as RequestAsServer, Response as ResponseAsServer};
 use url::Url;
@@ -12,9 +13,9 @@ pub struct Proxificate;
 impl Proxificate {
     /// Receives request from client, returns corresponding request object
     /// to the downstream server
-    pub fn map_request(
+    pub async fn map_request(
         mut request_from_client: RequestAsServer<()>,
-    ) -> RequestAsClient<http_client::isahc::IsahcClient> {
+    ) -> RequestAsClient<IsahcClient> {
         let method = request_from_client.method().clone();
 
         //TODO: Get the target server URL
@@ -26,5 +27,9 @@ impl Proxificate {
         request_for_downstream
     }
 
-    pub fn convert_to_response() -> Result<ResponseAsClient, Box<dyn Error>> {}
+    pub async fn convert_to_response(
+        request_for_downstream: RequestAsClient<IsahcClient>,
+    ) -> Result<ResponseAsClient, Box<dyn Error>> {
+        Ok(request_for_downstream.await.map_err(|e| format!("{}", e))?)
+    }
 }
