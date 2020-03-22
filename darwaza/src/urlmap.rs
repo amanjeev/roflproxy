@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
 
-use tide::{Request as RequestAsServer, Response as ResponseAsServer};
+use tide::Request as RequestAsServer;
 use url::Url;
 
 /// Trait to extend functionality of Url crate

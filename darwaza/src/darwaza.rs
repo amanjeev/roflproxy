@@ -1,13 +1,8 @@
-use std::collections::HashMap;
-use std::error::Error;
-
 use async_std::{io, task};
 use log::error;
-use surf::{Request as RequestAsClient, Response as ResponseAsClient};
 use tide::{Request as RequestAsServer, Response as ResponseAsServer};
-use url::Url;
 
-use crate::proxyficate::Proxificate;
+use crate::proxyficate::Proxyficate;
 
 pub fn demain() {
     task::block_on(async move {
@@ -30,7 +25,7 @@ async fn proxy(request: RequestAsServer<()>) -> ResponseAsServer {
     // get the target server from the uri segment
     // then get the target segment from the remaining url segment
 
-    let mut p = Proxificate {
+    let mut p = Proxyficate {
         request_from_client: request,
     };
 
