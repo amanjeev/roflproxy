@@ -26,7 +26,7 @@ pub trait UrlMap {
     /// and the request is for
     ///     `/staff/jdoe`
     /// then, the target server is `foo.com:1234/jdoe`
-    fn get_target_server_url(request: RequestAsServer<()>) -> Result<Url, Box<dyn Error>> {
+    fn get_target_server_url(request: &RequestAsServer<()>) -> Result<Url, Box<dyn Error>> {
         let incoming_request_uri = request.uri().clone();
         // get the target from uri segment using the map
         let uri_map = Self::map_uri_to_target();

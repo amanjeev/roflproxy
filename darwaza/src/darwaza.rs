@@ -30,9 +30,11 @@ async fn proxy(request: RequestAsServer<()>) -> ResponseAsServer {
     // get the target server from the uri segment
     // then get the target segment from the remaining url segment
 
-    let mut p = Proxificate {};
+    let mut p = Proxificate {
+        request_from_client: request,
+    };
 
-    let mut target_server_response = match p.convert_to_response(request).await {
+    let mut target_server_response = match p.convert_to_response().await {
         Ok(r) => r,
         Err(e) => {
             error!("{}", e);
