@@ -6,6 +6,8 @@
 
 **NOTHING TO SEE HERE (YET)!** This is a way for me to play with Rust and async-std, async-rs etc.
 
+This name is an exaggeration of HAHAProxy.
+
 ## Goals
 
 Play and have fun.
