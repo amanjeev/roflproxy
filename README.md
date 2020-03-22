@@ -2,29 +2,21 @@
 
 > When you are laughing on the floor, by proxy.
 
-NOTHING TO SEE HERE!
+**NOTHING TO SEE HERE (YET)!** This is a way for me to play with Rust and async-std, async-rs etc.
 
-This is a way for me to play with Rust and async-std, async-rs etc.
+## Goals
 
-## Main goals of this project
+Play and have fun.
 
-- Play.
-- Have fun.
-- A tiny API gateway or proxy that works with static file API definition.
-- Has SSO feature and works with OpenID Connect protocol, esp.**distributed claims** setup.
-- Support multiple Identity Providers.
-- Allows for middleware/plugins to enhance the request/response flow and extensibility.
+Create a tiny API gateway (or reverse proxy) that works with static file API definition and works with OpenID Connect protocol, esp. [distributed claims setup] while supporting multiple Identity Providers.
 
-## TODO
+## Changelog
 
-- Proxy HTTP spec changes to adhere to the standard
-    - Headers
-    - Response status codes
-- Mapping of 
-    - Config based target servers
-    - Config based API setting
-    - Better way to define servers in config and scheme
-- OIDC SSO
-- Hot configuration change so the gateway runs all the time
-- Edit all `?` with proper crap
-- 
+See [CHANGELOG.md](CHANGELOG.md)
+
+## TODOs
+
+See [TODO.md](TODO.md) for now. If things go further maybe there will be GH issues.
+
+
+[distributed claims setup]: https://openid.net/specs/openid-connect-core-1_0.html#DistributedExample
