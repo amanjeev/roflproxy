@@ -1,6 +1,6 @@
 mod config;
-mod darwaza;
-mod proxyficate;
+pub mod darwaza;
+pub mod proxyficate;
 mod urlmap;
 
 fn main() -> Result<(), std::io::Error> {
