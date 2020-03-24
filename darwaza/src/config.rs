@@ -2,28 +2,28 @@ use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 /// Type to hold the server's own config
-pub struct RoflServerConfig {
+pub struct ServerConfig {
     pub addr: SocketAddr, // ip:port
 }
 
-impl Default for RoflServerConfig {
+impl Default for ServerConfig {
     fn default() -> Self {
-        RoflServerConfig {
+        ServerConfig {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 12666),
         }
     }
 }
 
-impl Clone for RoflServerConfig {
+impl Clone for ServerConfig {
     fn clone(&self) -> Self {
-        RoflServerConfig { addr: self.addr }
+        ServerConfig { addr: self.addr }
     }
 }
 
 /// Type to hold the router config to
 /// route traffic to downstream servers
 #[derive(Clone, Debug, Default)]
-pub struct RoflRouterConfig {
+pub struct RouterConfig {
     pub routermap: HashMap<&'static str, SocketAddr>,
 }
 
@@ -33,7 +33,7 @@ mod tests {
 
     #[test]
     fn rofl_server_config_default() {
-        let server_config = RoflServerConfig::default();
+        let server_config = ServerConfig::default();
         assert_eq!(server_config.addr.port(), 12666);
         assert!(server_config.addr.ip().is_ipv4());
         assert_eq!(server_config.addr.to_string().as_str(), "127.0.0.1:12666");
@@ -41,7 +41,7 @@ mod tests {
 
     #[test]
     fn rofl_server_config_stuff() {
-        let server_config = RoflServerConfig {
+        let server_config = ServerConfig {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080),
         };
         assert_eq!(server_config.addr.port(), 8080);
@@ -64,7 +64,7 @@ mod tests {
             "/contact",
             SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 2)), 8083),
         );
-        let router_config = RoflRouterConfig { routermap: routes };
+        let router_config = RouterConfig { routermap: routes };
         assert_eq!(
             router_config.routermap["/about"],
             SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080)
