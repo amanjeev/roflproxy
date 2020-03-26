@@ -19,6 +19,7 @@ pub fn demain() {
         if let Err(e) = server.listen(addr).await {
             error!("{}", e);
         }
+        println!("Listening on: {:?}", addr.clone());
     })
 }
 

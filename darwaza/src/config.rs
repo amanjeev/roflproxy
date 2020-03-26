@@ -1,7 +1,7 @@
 use clap::{App, ArgMatches};
 use http::method::Method;
 use std::collections::HashMap;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 /// Type to hold the server's own config
 pub struct ServerConfig {
@@ -11,7 +11,7 @@ pub struct ServerConfig {
 impl ServerConfig {
     pub fn new() -> Self {
         let initial = Self::init_config();
-        let addr = match initial.value_of("config") {
+        let addr = match initial.value_of("address") {
             Some(a) => a.parse().unwrap(),
             _ => "127.0.0.1:12666".parse().unwrap(),
         };
@@ -22,6 +22,7 @@ impl ServerConfig {
     fn init_config() -> ArgMatches {
         let matches = App::new("darwaza")
             .about("The gateway")
+            .arg("-a, --address=[ADDRESS:PORT] 'The address:port on which proxy listens'")
             .arg("-c, --config=[FILE] 'Sets the API config file'");
 
         matches.get_matches()
@@ -45,7 +46,7 @@ impl Clone for ServerConfig {
 #[derive(Clone, Debug)]
 pub struct RouteInfo {
     addr: SocketAddr,
-    methods: [Method; 32],
+    methods: Vec<Method>,
     //TODO: add local settings here like
     // timeouts, retries etc.
 }
@@ -54,7 +55,7 @@ pub struct RouteInfo {
 /// route traffic to downstream servers
 #[derive(Clone, Debug, Default)]
 pub struct RouterConfig {
-    pub routermap: HashMap<&'static str, RouteInfo>,
+    pub routemap: HashMap<&'static str, RouteInfo>,
     //TODO: add global settings here like
     // timeouts, retries etc.
 }
@@ -86,25 +87,47 @@ mod tests {
         let mut routes = HashMap::new();
         routes.insert(
             "/about",
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080),
+            RouteInfo {
+                addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080),
+                methods: vec![Method::GET, Method::POST, Method::PUT],
+            },
         );
         routes.insert(
             "/blog",
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8081),
+            RouteInfo {
+                addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8081),
+                methods: vec![Method::GET, Method::HEAD],
+            },
         );
         routes.insert(
             "/contact",
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 2)), 8083),
+            RouteInfo {
+                addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 2)), 8083),
+                methods: vec![
+                    Method::GET,
+                    Method::DELETE,
+                    Method::POST,
+                    Method::HEAD,
+                    Method::PUT,
+                    Method::OPTIONS,
+                    Method::PATCH,
+                ],
+            },
         );
-        let router_config = RouterConfig { routermap: routes };
+        let router_config = RouterConfig { routemap: routes };
+
         assert_eq!(
-            router_config.routermap["/about"],
+            router_config.routemap["/about"].addr,
             SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080)
         );
         assert_eq!(
-            router_config.routermap["/blog"].to_string().as_str(),
+            router_config.routemap["/blog"].addr.to_string().as_str(),
             "10.10.0.1:8081"
         );
-        assert_eq!(router_config.routermap["/contact"].port(), 8083);
+        assert_eq!(router_config.routemap["/contact"].addr.port(), 8083);
+        assert_eq!(router_config.routemap["/contact"].methods.len(), 7);
+        assert!(router_config.routemap["/contact"]
+            .methods
+            .contains(&Method::PATCH));
     }
 }
