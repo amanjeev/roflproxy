@@ -1,4 +1,5 @@
 use clap::{App, ArgMatches};
+use http::method::Method;
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
 
@@ -41,11 +42,21 @@ impl Clone for ServerConfig {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct RouteInfo {
+    addr: SocketAddr,
+    methods: [Method; 32],
+    //TODO: add local settings here like
+    // timeouts, retries etc.
+}
+
 /// Type to hold the router config to
 /// route traffic to downstream servers
 #[derive(Clone, Debug, Default)]
 pub struct RouterConfig {
-    pub routermap: HashMap<&'static str, SocketAddr>,
+    pub routermap: HashMap<&'static str, RouteInfo>,
+    //TODO: add global settings here like
+    // timeouts, retries etc.
 }
 
 #[cfg(test)]
