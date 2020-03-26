@@ -1,10 +1,30 @@
-use clap::Clap;
+use clap::{App, ArgMatches};
 use std::collections::HashMap;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, ToSocketAddrs};
 
 /// Type to hold the server's own config
 pub struct ServerConfig {
     pub addr: SocketAddr, // ip:port
+}
+
+impl ServerConfig {
+    pub fn new() -> Self {
+        let initial = Self::init_config();
+        let addr = match initial.value_of("config") {
+            Some(a) => a.parse().unwrap(),
+            _ => "127.0.0.1:12666".parse().unwrap(),
+        };
+
+        ServerConfig { addr }
+    }
+
+    fn init_config() -> ArgMatches {
+        let matches = App::new("darwaza")
+            .about("The gateway")
+            .arg("-c, --config=[FILE] 'Sets the API config file'");
+
+        matches.get_matches()
+    }
 }
 
 impl Default for ServerConfig {

@@ -1,12 +1,14 @@
+use crate::config;
 use crate::proxyficate::Proxyficate;
 use async_std::{io, task};
 use log::error;
 use tide::{Request as RequestAsServer, Response as ResponseAsServer};
 
 pub fn demain() {
+    let config = config::ServerConfig::new();
+
     task::block_on(async move {
-        // TODO: from config proxy server should listen on here
-        let addr = format!("127.0.0.1:12666");
+        let addr = config.addr;
         let mut server = tide::new();
 
         // let's forward all requests to the `proxy` function
