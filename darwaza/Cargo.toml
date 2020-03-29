@@ -16,6 +16,8 @@ http-client = { version = "1.1.0", features = ["native_client"] }
 url = "2.0.0"
 log = "0.4.8"
 clap = { git = "https://github.com/clap-rs/clap/" }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
 
 [[bin]]
 name = "darwaza"

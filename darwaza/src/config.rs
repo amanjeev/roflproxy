@@ -1,5 +1,5 @@
 use clap::{App, ArgMatches};
-use http::method::Method;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
@@ -43,19 +43,19 @@ impl Clone for ServerConfig {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RouteInfo {
     addr: SocketAddr,
-    methods: Vec<Method>,
+    methods: Vec<String>,
     //TODO: add local settings here like
     // timeouts, retries etc.
 }
 
 /// Type to hold the router config to
 /// route traffic to downstream servers
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct RouterConfig {
-    pub routemap: HashMap<&'static str, RouteInfo>,
+    pub routemap: HashMap<String, RouteInfo>,
     //TODO: add global settings here like
     // timeouts, retries etc.
 }
@@ -63,6 +63,8 @@ pub struct RouterConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use http::method::Method;
+    use serde_yaml;
 
     #[test]
     fn rofl_server_config_default() {
@@ -86,35 +88,37 @@ mod tests {
     fn rofl_router_config_stuff() {
         let mut routes = HashMap::new();
         routes.insert(
-            "/about",
+            "/about".to_string(),
             RouteInfo {
                 addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080),
-                methods: vec![Method::GET, Method::POST, Method::PUT],
+                methods: vec!["GET".to_string(), "POST".to_string(), "PUT".to_string()],
             },
         );
         routes.insert(
-            "/blog",
+            "/blog".to_string(),
             RouteInfo {
                 addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8081),
-                methods: vec![Method::GET, Method::HEAD],
+                methods: vec!["GET".to_string(), "HEAD".to_string()],
             },
         );
         routes.insert(
-            "/contact",
+            "/contact".to_string(),
             RouteInfo {
                 addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 2)), 8083),
                 methods: vec![
-                    Method::GET,
-                    Method::DELETE,
-                    Method::POST,
-                    Method::HEAD,
-                    Method::PUT,
-                    Method::OPTIONS,
-                    Method::PATCH,
+                    Method::GET.to_string(),
+                    Method::DELETE.to_string(),
+                    Method::POST.to_string(),
+                    Method::HEAD.to_string(),
+                    Method::PUT.to_string(),
+                    Method::OPTIONS.to_string(),
+                    Method::PATCH.to_string(),
                 ],
             },
         );
         let router_config = RouterConfig { routemap: routes };
+        let serialized_config = serde_yaml::to_string(&router_config).unwrap();
+        println!(serialized_config);
 
         assert_eq!(
             router_config.routemap["/about"].addr,
@@ -128,6 +132,6 @@ mod tests {
         assert_eq!(router_config.routemap["/contact"].methods.len(), 7);
         assert!(router_config.routemap["/contact"]
             .methods
-            .contains(&Method::PATCH));
+            .contains(&Method::PATCH.to_string()));
     }
 }

@@ -1,0 +1,23 @@
+---
+routemap:
+  /about:
+    addr: "10.10.0.1:8080"
+    methods:
+      - GET
+      - POST
+      - PUT
+  /blog:
+    addr: "10.10.0.1:8081"
+    methods:
+      - GET
+      - HEAD
+  /contact:
+    addr: "10.10.0.2:8083"
+    methods:
+      - GET
+      - DELETE
+      - POST
+      - HEAD
+      - PUT
+      - OPTIONS
+      - PATCH
