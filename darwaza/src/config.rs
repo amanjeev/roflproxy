@@ -1,7 +1,9 @@
 use clap::{App, ArgMatches};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::path::Path;
 
 /// Type to hold the server's own config
 pub struct ServerConfig {
@@ -60,11 +62,20 @@ pub struct RouterConfig {
     // timeouts, retries etc.
 }
 
+impl RouterConfig {
+    pub fn from_file(file_path: &Path) -> Self {
+        let contents = fs::read_to_string(file_path).expect("Error while trying to read the file");
+
+        serde_yaml::from_str(contents.as_str().as_ref()).expect("Error while trying to serialize")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use http::method::Method;
     use serde_yaml;
+    use std::env::current_dir;
 
     #[test]
     fn rofl_server_config_default() {
@@ -118,7 +129,7 @@ mod tests {
         );
         let router_config = RouterConfig { routemap: routes };
         let serialized_config = serde_yaml::to_string(&router_config).unwrap();
-        println!(serialized_config);
+        println!("{}", serialized_config);
 
         assert_eq!(
             router_config.routemap["/about"].addr,
@@ -133,5 +144,22 @@ mod tests {
         assert!(router_config.routemap["/contact"]
             .methods
             .contains(&Method::PATCH.to_string()));
+    }
+
+    #[test]
+    fn router_config_file() {
+        let mut current_directory = current_dir()
+            .expect("Failed to fetch the current directory")
+            .to_str()
+            .expect("Failed to convert current directory PathBuf to str")
+            .to_string();
+
+        current_directory.push_str("/src/routertest.yaml");
+        let conf = RouterConfig::from_file(Path::new(current_directory.as_str()));
+
+        assert_eq!(
+            conf.routemap["/about"].addr.to_string().as_str(),
+            "10.10.0.1:8080"
+        );
     }
 }
