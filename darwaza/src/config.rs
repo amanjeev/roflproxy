@@ -1,24 +1,34 @@
 use clap::{App, ArgMatches};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env::current_dir;
 use std::fs;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::Path;
 
+struct PathDef<'s>(&'s Path);
+
 /// Type to hold the server's own config
-pub struct ServerConfig {
+pub struct ServerConfig<'s, 'c> {
     pub addr: SocketAddr, // ip:port
+    pub config: &'c PathDef<'s>,
 }
 
-impl ServerConfig {
+impl<'s, 'c> ServerConfig<'s, 'c> {
     pub fn new() -> Self {
         let initial = Self::init_config();
+
         let addr = match initial.value_of("address") {
             Some(a) => a.parse().unwrap(),
             _ => "127.0.0.1:12666".parse().unwrap(),
         };
 
-        ServerConfig { addr }
+        let config = match initial.value_of("config") {
+            Some(c) => Path::new(c),
+            _ => Path::new("/tmp/rofl"),
+        };
+
+        ServerConfig { addr, config }
     }
 
     fn init_config() -> ArgMatches {
@@ -31,17 +41,21 @@ impl ServerConfig {
     }
 }
 
-impl Default for ServerConfig {
+impl<'s, 'c> Default for ServerConfig<'s, 'c> {
     fn default() -> Self {
         ServerConfig {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 12666),
+            config: Path::new("/tmp/rofl"),
         }
     }
 }
 
-impl Clone for ServerConfig {
+impl<'s, 'c> Clone for ServerConfig<'s, 'c> {
     fn clone(&self) -> Self {
-        ServerConfig { addr: self.addr }
+        ServerConfig {
+            addr: self.addr,
+            config: self.config,
+        }
     }
 }
 
@@ -89,6 +103,7 @@ mod tests {
     fn rofl_server_config_stuff() {
         let server_config = ServerConfig {
             addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(10, 10, 0, 1)), 8080),
+            config: Path::new("/tmp/rofl"),
         };
         assert_eq!(server_config.addr.port(), 8080);
         assert!(server_config.addr.ip().is_ipv4());

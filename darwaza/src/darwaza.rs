@@ -1,8 +1,11 @@
 use crate::config;
+use crate::config::RouterConfig;
 use crate::proxyficate::Proxyficate;
 use async_std::{io, task};
 use log::error;
 use tide::{Request as RequestAsServer, Response as ResponseAsServer};
+
+// static ROUTERCONFIG = RouterConfig::from_file(Path::new(current_dir().expect("").to_str().expect("").to_string().push_str()));
 
 pub fn demain() {
     let config = config::ServerConfig::new();
